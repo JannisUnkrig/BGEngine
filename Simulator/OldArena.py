@@ -1,7 +1,7 @@
 from functools import partial
 from time import sleep
 from random import random, choice
-from Minions import Keyword, TriggerCombat
+from Simulator.Minion import Keyword, TriggerCombat
 
 
 class Arena:
@@ -66,8 +66,8 @@ class Arena:
         else:
             self.p1Turn = False
 
-        self.b1 = p1.get_board_copy()
-        self.b2 = p2.get_board_copy()
+        self.b1 = p1.get_combat_board()
+        self.b2 = p2.get_combat_board()
         self.clear_trigger_lists()
         self.add_to_trigger_list(self.b1, self.p1)
         self.add_to_trigger_list(self.b2, self.p2)
@@ -283,8 +283,8 @@ class Arena:
             dmg_p1 = False  # p2's minion took damage
 
         # handle divine shield
-        if Keyword.DIVINE_SHIELD in who.keywords:
-            who.keywords.remove(Keyword.DIVINE_SHIELD)
+        if Keyword.DIVINESHIELD in who.keywords:
+            who.keywords.remove(Keyword.DIVINESHIELD)
             self.log(str(who) + " lost his divine shield.")
             if dmg_p1:
                 for m in self._p1AfterLoseDivineShield:
@@ -402,85 +402,77 @@ class Arena:
     def add_to_trigger_list(self, minions, p):
         if p == self.p1:
             for minion in minions:
-                if TriggerCombat.ON_ATTACK in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_ATTACK in minion.triggerCombat:
                     self._p1OnAttack.append(minion)
-                if TriggerCombat.ON_GET_ATTACKED in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_GET_ATTACKED in minion.triggerCombat:
                     self._p1OnGetAttacked.append(minion)
-                if TriggerCombat.ON_KILL in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_KILLS in minion.triggerCombat:
                     self._p1OnKill.append(minion)
-                if TriggerCombat.ON_GET_KILLED in minion.triggerCombat:
+                if TriggerCombat.ON_AND_AFTER_FRIENDLY_GETS_KILLED in minion.triggerCombat:
                     self._p1OnGetKilled.append(minion)
-                if TriggerCombat.AFTER_GET_KILLED in minion.triggerCombat:
-                    self._p1AfterGetKilled.append(minion)
                 if TriggerCombat.ON_START_OF_COMBAT in minion.triggerCombat:
                     self._p1OnStartOfCombat.append(minion)
-                if TriggerCombat.AFTER_LOSE_DIVINE_SHIELD in minion.triggerCombat:
+                if TriggerCombat.AFTER_FRIENDLY_LOSE_DIVINE_SHIELD in minion.triggerCombat:
                     self._p1AfterLoseDivineShield.append(minion)
-                if TriggerCombat.ON_SUMMON in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_SUMMON in minion.triggerCombat:
                     self._p1OnSummon.append(minion)
-                if TriggerCombat.AFTER_SUMMON in minion.triggerCombat:
+                if TriggerCombat.AFTER_FRIENDLY_SUMMON in minion.triggerCombat:
                     self._p1AfterSummon.append(minion)
         elif p == self.p2:
             for minion in minions:
-                if TriggerCombat.ON_ATTACK in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_ATTACK in minion.triggerCombat:
                     self._p2OnAttack.append(minion)
-                if TriggerCombat.ON_GET_ATTACKED in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_GET_ATTACKED in minion.triggerCombat:
                     self._p2OnGetAttacked.append(minion)
-                if TriggerCombat.ON_KILL in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_KILLS in minion.triggerCombat:
                     self._p2OnKill.append(minion)
-                if TriggerCombat.ON_GET_KILLED in minion.triggerCombat:
+                if TriggerCombat.ON_AND_AFTER_FRIENDLY_GETS_KILLED in minion.triggerCombat:
                     self._p2OnGetKilled.append(minion)
-                if TriggerCombat.AFTER_GET_KILLED in minion.triggerCombat:
-                    self._p2AfterGetKilled.append(minion)
                 if TriggerCombat.ON_START_OF_COMBAT in minion.triggerCombat:
                     self._p2OnStartOfCombat.append(minion)
-                if TriggerCombat.AFTER_LOSE_DIVINE_SHIELD in minion.triggerCombat:
+                if TriggerCombat.AFTER_FRIENDLY_LOSE_DIVINE_SHIELD in minion.triggerCombat:
                     self._p2AfterLoseDivineShield.append(minion)
-                if TriggerCombat.ON_SUMMON in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_SUMMON in minion.triggerCombat:
                     self._p2OnSummon.append(minion)
-                if TriggerCombat.AFTER_SUMMON in minion.triggerCombat:
+                if TriggerCombat.AFTER_FRIENDLY_SUMMON in minion.triggerCombat:
                     self._p2AfterSummon.append(minion)
 
     def remove_from_trigger_list(self, minions, p):
         if p == self.p1:
             for minion in minions:
-                if TriggerCombat.ON_ATTACK in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_ATTACK in minion.triggerCombat:
                     self._p1OnAttack.remove(minion)
-                if TriggerCombat.ON_GET_ATTACKED in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_GET_ATTACKED in minion.triggerCombat:
                     self._p1OnGetAttacked.remove(minion)
-                if TriggerCombat.ON_KILL in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_KILLS in minion.triggerCombat:
                     self._p1OnKill.remove(minion)
-                if TriggerCombat.ON_GET_KILLED in minion.triggerCombat:
+                if TriggerCombat.ON_AND_AFTER_FRIENDLY_GETS_KILLED in minion.triggerCombat:
                     self._p1OnGetKilled.remove(minion)
-                if TriggerCombat.AFTER_GET_KILLED in minion.triggerCombat:
-                    self._p1AfterGetKilled.remove(minion)
                 if TriggerCombat.ON_START_OF_COMBAT in minion.triggerCombat:
                     self._p1OnStartOfCombat.remove(minion)
-                if TriggerCombat.AFTER_LOSE_DIVINE_SHIELD in minion.triggerCombat:
+                if TriggerCombat.AFTER_FRIENDLY_LOSE_DIVINE_SHIELD in minion.triggerCombat:
                     self._p1AfterLoseDivineShield.remove(minion)
-                if TriggerCombat.ON_SUMMON in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_SUMMON in minion.triggerCombat:
                     self._p1OnSummon.remove(minion)
-                if TriggerCombat.AFTER_SUMMON in minion.triggerCombat:
+                if TriggerCombat.AFTER_FRIENDLY_SUMMON in minion.triggerCombat:
                     self._p1AfterSummon.remove(minion)
         elif p == self.p2:
             for minion in minions:
-                if TriggerCombat.ON_ATTACK in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_ATTACK in minion.triggerCombat:
                     self._p2OnAttack.remove(minion)
-                if TriggerCombat.ON_GET_ATTACKED in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_GET_ATTACKED in minion.triggerCombat:
                     self._p2OnGetAttacked.remove(minion)
-                if TriggerCombat.ON_KILL in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_KILLS in minion.triggerCombat:
                     self._p2OnKill.remove(minion)
-                if TriggerCombat.ON_GET_KILLED in minion.triggerCombat:
+                if TriggerCombat.ON_AND_AFTER_FRIENDLY_GETS_KILLED in minion.triggerCombat:
                     self._p2OnGetKilled.remove(minion)
-                if TriggerCombat.AFTER_GET_KILLED in minion.triggerCombat:
-                    self._p2AfterGetKilled.remove(minion)
                 if TriggerCombat.ON_START_OF_COMBAT in minion.triggerCombat:
                     self._p2OnStartOfCombat.remove(minion)
-                if TriggerCombat.AFTER_LOSE_DIVINE_SHIELD in minion.triggerCombat:
+                if TriggerCombat.AFTER_FRIENDLY_LOSE_DIVINE_SHIELD in minion.triggerCombat:
                     self._p2AfterLoseDivineShield.remove(minion)
-                if TriggerCombat.ON_SUMMON in minion.triggerCombat:
+                if TriggerCombat.ON_FRIENDLY_SUMMON in minion.triggerCombat:
                     self._p2OnSummon.remove(minion)
-                if TriggerCombat.AFTER_SUMMON in minion.triggerCombat:
+                if TriggerCombat.AFTER_FRIENDLY_SUMMON in minion.triggerCombat:
                     self._p2AfterSummon.remove(minion)
 
     def clear_trigger_lists(self):
@@ -506,7 +498,7 @@ class Arena:
 
     def log(self, text):
         if self.doLog:
-            self.mf.add_to_log(text)
+            self.mf.always_add_to_log(text)
 
     def disp(self, text):
         if self.doLog:
