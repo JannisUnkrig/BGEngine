@@ -1,19 +1,23 @@
+import threading
 from tkinter import *
+from tensorflow.keras.models import load_model
 
 from Simulator.Game import Game, setup_game
 from Skynet.V1.AgentPlayerAdapterUtils import get_observation, execute_action, action_no_to_string
 from Skynet.V1.Agent import IgnorantAgent
+from Skynet.V1.Dojo import Dojo
 
 
 class MainFrame(Frame):
 
     def __init__(self):
         # Game Logic
-        self.game = Game(self)
         self.doLog = True
+        self.game = Game(self)
+        self.dojo = Dojo(self)
         self.agent = None
         try:
-            self.agent = IgnorantAgent("Skynet/V1/AgentModels/dqn_model_agent_0")
+            self.agent = IgnorantAgent(self.dojo.agents[0].q_eval)
         except (ImportError, IOError):
             pass
 
@@ -82,9 +86,14 @@ class MainFrame(Frame):
                                    "      roll: Rerolls the taverns offers.\n"
                                    "      freeze: (Un-)freezes the tavern.\n"
                                    "   A.I. Commands:\n"
-                                   "      agent filename: Loads an Agent from /Skynet/V1/AgentModels.\n"
-                                   "      aieval x: Agent evaluates actions (x = moves left before combat).\n"
-                                   "      aimove x: Agent performs one action (x = moves left before combat).\n"
+                                   "      aiload: Loads agents from files in /Skynet/V1/AgentModels.\n"
+                                   "      aisave: Saves agents to files in /Skynet/V1/AgentModels.\n"
+                                   "      aitrain x (y): Trains with x moves per turn. Lasts y games or until aistop.\n"
+                                   "      aistop: Stops the training.\n"
+                                   "      agent filename: Chooses active agent from /Skynet/V1/AgentModels.\n"
+                                   "      aieval x: Active agent evaluates actions (x = moves left before combat).\n"
+                                   "      aimove x: Active agent performs one action (x = moves left before combat).\n"
+                                   "      aiturn x: Active agent performs one full turn (x = moves per turn).\n"
                                    )
 
         elif split[0] == "newgame":
@@ -309,15 +318,56 @@ class MainFrame(Frame):
 
         # ############################# A.I. Commands ############################# #
 
-        elif split[0] == "agent":
-            if len(split) != 2:
-                self.always_add_to_log("\"agent\" needs exactly 1 parameter (filename).")
+        elif split[0] == "aiload":
+            if len(split) != 1:
+                self.always_add_to_log("\"aiload\" doesn't need parameters.")
                 return
-            try:
-                self.agent = IgnorantAgent("Skynet/V1/AgentModels/" + split[1])
-                self.always_add_to_log("Loaded " + split[1] + " from /Skynet/V1/AgentModels.")
-            except (ImportError, IOError):
-                self.always_add_to_log("No file with name \"" + split[1] + "\" found in /Skynet/V1/AgentModels.")
+            self.dojo.load_agents()
+            self.always_add_to_log("Loaded agents from /Skynet/V1/AgentModels.")
+
+        elif split[0] == "aisave":
+            if len(split) != 1:
+                self.always_add_to_log("\"aisave\" doesn't need parameters.")
+                return
+            self.dojo.save_agents()
+            self.always_add_to_log("Saved agents to /Skynet/V1/AgentModels.")
+
+        elif split[0] == "aitrain":
+            if not 2 <= len(split) <= 3:
+                self.always_add_to_log("\"aitrain\" command needs 1 or 2 parameters.")
+                return
+            if not split[1].isnumeric() or 1 > int(split[1]):
+                self.always_add_to_log("First parameter should be the number of moves per turn.")
+                return
+            if len(split) == 3 and (not split[2].isnumeric() or 1 > int(split[2])):
+                self.always_add_to_log("Second optional parameter should be the number of games.")
+                return
+            no_moves = int(split[1])
+            no_games = None
+            if len(split) == 3:
+                no_games = int(split[2])
+
+            t = threading.Thread(target=self.dojo.train_agents, args=(no_moves, no_games))
+            if no_games is None:
+                self.always_add_to_log("Starting training with " + split[1] + " moves per turn.")
+            else:
+                self.always_add_to_log("Starting training with " + split[1] + " moves per turn and " +
+                                       split[2] + " games.")
+            t.start()
+
+        elif split[0] == "aistop":
+            if len(split) != 1:
+                self.always_add_to_log("\"aistop\" doesn't need parameters.")
+                return
+            self.dojo.continue_training = False
+            self.always_add_to_log("Stopped training.")
+
+        elif split[0] == "agent":
+            if len(split) != 2 or not split[1].isnumeric() or not 0 <= int(split[1]) <= 7:
+                self.always_add_to_log("\"agent\" needs exactly 1 parameter between 0 and 7.")
+                return
+            self.agent = IgnorantAgent(self.dojo.agents[int(split[1])].q_eval)
+            self.always_add_to_log("You're now using agent " + split[1] + ".")
 
         elif split[0] == "aieval":
             if len(split) != 2 or not split[1].isnumeric():
@@ -334,6 +384,17 @@ class MainFrame(Frame):
             observation = get_observation(int(split[1]), self.game.activePlayer)
             action_no = self.agent.choose_action(observation)
             execute_action(self.game.activePlayer, action_no)
+            self.show_active_player()
+
+        elif split[0] == "aiturn":
+            if len(split) != 2 or not split[1].isnumeric():
+                self.always_add_to_log("\"aiturn\" needs exactly 1 parameter (moves per turn).")
+                return
+            moves = int(split[1])
+            for i in range(moves, 0, -1):
+                observation = get_observation(i, self.game.activePlayer)
+                action_no = self.agent.choose_action(observation)
+                execute_action(self.game.activePlayer, action_no)
             self.show_active_player()
 
         else:

@@ -11,7 +11,7 @@ depr._PRINT_DEPRECATION_WARNINGS = False
 class Agent:
 
     def __init__(self, learning_rate, gamma, n_actions, epsilon, batch_size, input_dims, agent_no, epsilon_dec=0.005,
-                 epsilon_end=0.01, mem_size=1000000, file_path_and_name='AgentModels/dqn_model_agent_'):
+                 epsilon_end=0.01, mem_size=100_000, file_path_and_name='AgentModels/dqn_model_agent_'):
         self.agent_no = agent_no
         self.action_space = [i for i in range(n_actions)]
         self.gamma = gamma
@@ -35,7 +35,7 @@ class Agent:
             action = np.argmax(action_qualities)
         return action
 
-    # returns mean squared error (mse) of this learning session
+    # returns avg. error of this learning session
     def learn(self):
         if self.memory.mem_counter < self.batch_size:
             return -1
@@ -52,10 +52,11 @@ class Agent:
 
         self.q_eval.train_on_batch(states, q_target)
 
-        self.epsilon = self.epsilon - self.epsilon_dec if self.epsilon > self.epsilon_min else self.epsilon_min
+        if self.epsilon > self.epsilon_min:
+            self.epsilon -= self.epsilon_dec
 
-        error_all_actions = np.absolute(np.subtract(q_eval, q_target))
-        avg_error = np.sum(error_all_actions) / self.batch_size
+        error_all_actions_whole_batch = np.absolute(np.subtract(q_eval, q_target))
+        avg_error = np.sum(error_all_actions_whole_batch) / self.batch_size
         return avg_error
 
     def save_model(self):
@@ -67,8 +68,8 @@ class Agent:
 
 class IgnorantAgent:
 
-    def __init__(self, file_path_and_name):
-        self.q_eval = load_model(file_path_and_name)
+    def __init__(self, model):
+        self.q_eval = model
 
     def choose_action(self, observation):
         state = np.array([observation])

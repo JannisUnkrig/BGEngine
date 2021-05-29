@@ -7,14 +7,16 @@ def get_observations(moves_left, game):
     return observations
 
 
-# encodes board state in the simplest way i could com up with:
-# [moves_to_combat, gold, tavern[0].id, tavern[1].id, tavern[2].id, board[0].id, board[1].id, hand[0].id]
+# encodes board state using one hot encoding (ohe) for the minions:
 def get_observation(moves_left, player):
-    return [moves_left,
-            player.gold,
-            _get_offer_id(player, 0), _get_offer_id(player, 1), _get_offer_id(player, 2),
-            _get_board_id(player, 0), _get_board_id(player, 1),
-            _get_hand_id(player, 0)]
+    observation = [moves_left, player.gold]
+    observation.extend(_get_offer_ohe(player, 0))
+    observation.extend(_get_offer_ohe(player, 1))
+    observation.extend(_get_offer_ohe(player, 2))
+    observation.extend(_get_board_ohe(player, 0))
+    observation.extend(_get_board_ohe(player, 1))
+    observation.extend(_get_hand_ohe(player, 0))
+    return observation
 
 
 def execute_actions(game, action_nos, moves_left):
@@ -62,29 +64,32 @@ def execute_action(player, action_no):
 
 def action_no_to_string(action_qualities):
     return "A.I. Evaluation of possible actions:" \
-           "\n   idle: %.2f" % action_qualities[0] + \
-           "\n   play: %.2f" % action_qualities[1] + \
-           "\n   buy 0: %.2f" % action_qualities[2] + \
-           "\n   buy 1: %.2f" % action_qualities[3] + \
-           "\n   buy 2: %.2f" % action_qualities[4] + \
-           "\n   sell: %.2f" % action_qualities[5] + \
-           "\n   roll: %.2f" % action_qualities[6] + \
-           "\n   freeze: %.2f" % action_qualities[7]
+           "\n   idle: %.3f" % action_qualities[0] + \
+           "\n   play: %.3f" % action_qualities[1] + \
+           "\n   buy 0: %.3f" % action_qualities[2] + \
+           "\n   buy 1: %.3f" % action_qualities[3] + \
+           "\n   buy 2: %.3f" % action_qualities[4] + \
+           "\n   sell: %.3f" % action_qualities[5] + \
+           "\n   roll: %.3f" % action_qualities[6] + \
+           "\n   freeze: %.3f" % action_qualities[7]
 
 
-def _get_offer_id(player, index):
+def _get_offer_ohe(player, index):
+    ohe_minion_id = [0] * (len(player.game.minionPool.allMinions) + 1)
     if len(player.tavern.offers) > index:
-        return player.tavern.offers[index].id
-    return 0
+        ohe_minion_id[player.tavern.offers[index].id] = 1
+    return ohe_minion_id
 
 
-def _get_board_id(player, index):
+def _get_board_ohe(player, index):
+    ohe_minion_id = [0] * (len(player.game.minionPool.allMinions) + 1)
     if player.get_board_size() > index:
-        return player.get_minion(index).id
-    return 0
+        ohe_minion_id[player.get_minion(index).id] = 1
+    return ohe_minion_id
 
 
-def _get_hand_id(player, index):
+def _get_hand_ohe(player, index):
+    ohe_minion_id = [0] * (len(player.game.minionPool.allMinions) + 1)
     if len(player.hand) > index:
-        return player.hand[index].id
-    return 0
+        ohe_minion_id[player.hand[index].id] = 1
+    return ohe_minion_id
