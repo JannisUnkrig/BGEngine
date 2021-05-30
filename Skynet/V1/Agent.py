@@ -11,7 +11,7 @@ depr._PRINT_DEPRECATION_WARNINGS = False
 class Agent:
 
     def __init__(self, learning_rate, gamma, n_actions, epsilon, batch_size, input_dims, agent_no, epsilon_dec=0.005,
-                 epsilon_end=0.01, mem_size=100_000, file_path_and_name='AgentModels/dqn_model_agent_'):
+                 epsilon_end=0.01, mem_size=100_000, file_path_and_name='Skynet/V1/AgentModels/dqn_model_agent_'):
         self.agent_no = agent_no
         self.action_space = [i for i in range(n_actions)]
         self.gamma = gamma

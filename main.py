@@ -1,10 +1,9 @@
 import threading
 from tkinter import *
-from tensorflow.keras.models import load_model
 
 from Simulator.Game import Game, setup_game
-from Skynet.V1.AgentPlayerAdapterUtils import get_observation, execute_action, action_no_to_string
 from Skynet.V1.Agent import IgnorantAgent
+from Skynet.V1.AgentPlayerAdapterUtils import get_observation, execute_action, action_no_to_string
 from Skynet.V1.Dojo import Dojo
 
 
@@ -15,11 +14,7 @@ class MainFrame(Frame):
         self.doLog = True
         self.game = Game(self)
         self.dojo = Dojo(self)
-        self.agent = None
-        try:
-            self.agent = IgnorantAgent(self.dojo.agents[0].q_eval)
-        except (ImportError, IOError):
-            pass
+        self.active_agent = IgnorantAgent(self.dojo.agents[0].q_eval)
 
         # Main Frame
         self.master = Tk()
@@ -90,7 +85,7 @@ class MainFrame(Frame):
                                    "      aisave: Saves agents to files in /Skynet/V1/AgentModels.\n"
                                    "      aitrain x (y): Trains with x moves per turn. Lasts y games or until aistop.\n"
                                    "      aistop: Stops the training.\n"
-                                   "      agent filename: Chooses active agent from /Skynet/V1/AgentModels.\n"
+                                   "      agent x: Chooses active agent (x = 0-7).\n"
                                    "      aieval x: Active agent evaluates actions (x = moves left before combat).\n"
                                    "      aimove x: Active agent performs one action (x = moves left before combat).\n"
                                    "      aiturn x: Active agent performs one full turn (x = moves per turn).\n"
@@ -366,7 +361,7 @@ class MainFrame(Frame):
             if len(split) != 2 or not split[1].isnumeric() or not 0 <= int(split[1]) <= 7:
                 self.always_add_to_log("\"agent\" needs exactly 1 parameter between 0 and 7.")
                 return
-            self.agent = IgnorantAgent(self.dojo.agents[int(split[1])].q_eval)
+            self.active_agent = IgnorantAgent(self.dojo.agents[int(split[1])].q_eval)
             self.always_add_to_log("You're now using agent " + split[1] + ".")
 
         elif split[0] == "aieval":
@@ -374,7 +369,7 @@ class MainFrame(Frame):
                 self.always_add_to_log("\"aieval\" needs exactly 1 parameter (moves left until combat).")
                 return
             observation = get_observation(int(split[1]), self.game.activePlayer)
-            action_qualities = self.agent.evaluate_actions(observation)
+            action_qualities = self.active_agent.evaluate_actions(observation)
             self.always_add_to_log(action_no_to_string(action_qualities))
 
         elif split[0] == "aimove":
@@ -382,7 +377,7 @@ class MainFrame(Frame):
                 self.always_add_to_log("\"aimove\" needs exactly 1 parameter (moves left until combat).")
                 return
             observation = get_observation(int(split[1]), self.game.activePlayer)
-            action_no = self.agent.choose_action(observation)
+            action_no = self.active_agent.choose_action(observation)
             execute_action(self.game.activePlayer, action_no)
             self.show_active_player()
 
@@ -393,7 +388,7 @@ class MainFrame(Frame):
             moves = int(split[1])
             for i in range(moves, 0, -1):
                 observation = get_observation(i, self.game.activePlayer)
-                action_no = self.agent.choose_action(observation)
+                action_no = self.active_agent.choose_action(observation)
                 execute_action(self.game.activePlayer, action_no)
             self.show_active_player()
 

@@ -20,13 +20,11 @@ class Dojo:
         self.error_history = []
 
     def create_new_agents(self):
-
         self.agents = [Agent(agent_no=i, gamma=0.99, epsilon=1.0, learning_rate=0.001, input_dims=self.len_state,
                              n_actions=8, mem_size=1000000, batch_size=64, epsilon_end=0.01)
                        for i in range(8)]
 
     def train_agents(self, moves_until_combat, n_games=None):
-
         episode_no = 0
         self.continue_training = True
         while self.continue_training:

@@ -10,11 +10,12 @@ from Skynet.V1.AgentPlayerAdapterUtils import get_observation, get_observations,
 def train_new_agents():
     tf.compat.v1.disable_eager_execution()
 
-    n_games = 5000
+    n_games = 100
     moves_until_combat = 10
     len_state = len(get_observation(0, Game().activePlayer))
     agents = [Agent(agent_no=i, gamma=0.99, epsilon=1.0, learning_rate=0.001, input_dims=len_state, n_actions=8,
-                    mem_size=1000000, batch_size=64, epsilon_end=0.01) for i in range(8)]
+                    mem_size=1000000, batch_size=64, epsilon_end=0.01,
+                    file_path_and_name='AgentModels/dqn_model_agent_') for i in range(8)]
 
     epsilon_history = []
     error_history = []
